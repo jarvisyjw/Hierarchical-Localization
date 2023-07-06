@@ -10,7 +10,7 @@ handler = logging.StreamHandler()
 handler.setFormatter(formatter)
 handler.setLevel(logging.INFO)
 
-logger = logging.getLogger("hloc")
+logger = logging.getLogger("VPR_VERIFICATION")
 logger.setLevel(logging.INFO)
 logger.addHandler(handler)
 logger.propagate = False
