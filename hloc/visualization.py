@@ -3,30 +3,43 @@ import random
 import numpy as np
 import pickle
 import pycolmap
+from pathlib import Path
+import argparse
+
+from .utils.io import get_descriptors, get_keypoints, get_matches, get_matches_from_path
+from . import logger
 
 from .utils.viz import (
-        plot_images, plot_keypoints, plot_matches, cm_RdGn, add_text)
-from .utils.io import read_image
-
+        plot_images, plot_keypoints, plot_matches, cm_RdGn, add_text, save_plot)
+from .utils.io import read_image, list_h5_names
+from .utils.viz_3d import plot_camera, init_figure, plot_points, plot_cameras, plot_camera_colmap
 
 def visualize_sfm_2d(reconstruction, image_dir, color_by='visibility',
-                     selected=[], n=1, seed=0, dpi=75):
+                     selected=[], n=1, seed=0, dpi=75, out=None, save=False):
     assert image_dir.exists()
     if not isinstance(reconstruction, pycolmap.Reconstruction):
         reconstruction = pycolmap.Reconstruction(reconstruction)
+    
+    name2id = {image.name: i for i, image in reconstruction.images.items()}
 
     if not selected:
+        # selected = [image.name for i, image in reconstruction.images.items()]
         image_ids = reconstruction.reg_image_ids()
         selected = random.Random(seed).sample(
                 image_ids, min(n, len(image_ids)))
 
     for i in selected:
-        image = reconstruction.images[i]
+        image = reconstruction.images[name2id[i]]
         keypoints = np.array([p.xy for p in image.points2D])
         visible = np.array([p.has_point3D() for p in image.points2D])
 
         if color_by == 'visibility':
             color = [(0, 0, 1) if v else (1, 0, 0) for v in visible]
+            '''
+            bgr
+            red for visible
+            blue for invisible
+            '''
             text = f'visible: {np.count_nonzero(visible)}/{len(visible)}'
         elif color_by == 'track_length':
             tl = np.array([reconstruction.points3D[p.point3D_id].track.length()
@@ -51,6 +64,15 @@ def visualize_sfm_2d(reconstruction, image_dir, color_by='visibility',
         plot_keypoints([keypoints], colors=[color], ps=4)
         add_text(0, text)
         add_text(0, name, pos=(0.01, 0.01), fs=5, lcolor=None, va='bottom')
+
+        if save:
+            logger.info(f'Save image at {str(out)}')
+            if not out.exists():
+                out.parent.mkdir(parents=True, exist_ok=True)
+                save_plot(out)
+            else:
+                logger.info(f'Image already exists at {str(out)}')
+
 
 
 def visualize_loc(results, image_dir, reconstruction=None, db_image_dir=None,
@@ -137,3 +159,181 @@ def visualize_loc_from_log(image_dir, query_name, loc, reconstruction=None,
         opts = dict(pos=(0.01, 0.01), fs=5, lcolor=None, va='bottom')
         add_text(0, query_name, **opts)
         add_text(1, db_name, **opts)
+
+def visualize_match_cross_view(image0: str, image1: str, 
+                              match_path: Path,
+                              feature0_path: Path,
+                              feature1_path: Path,
+                              database_image0: Path,
+                              database_image1: Path,
+                              out: Path,
+                              dpi=75,
+                              save=True):
+    matches, _ = get_matches(match_path, image0, image1)
+    matches0 = matches[:,0]
+    matches1 = matches[:,1]
+
+    keypoint0 = get_keypoints(feature0_path, image0)
+    keypoint1 = get_keypoints(feature1_path, image1)
+
+    kp_0 = keypoint0[matches0]
+    kp_1 = keypoint1[matches1]
+
+    image_0 = read_image(database_image0 / image0)
+    image_1 = read_image(database_image1 / image1)
+
+    plot_images([image_0, image_1], dpi=dpi)
+    plot_matches(kp_0, kp_1, a = 0.1)
+    add_text(0, image0)
+    add_text(1, image1)
+    if save:
+        logger.info(f'Save image at {str(out)}')
+        if not out.exists():
+            out.parent.mkdir(parents=True, exist_ok=True)
+            save_plot(out)
+        else:
+            logger.info(f'Image already exists at {str(out)}')
+
+
+def visualize_match_from_pair(image0: str, image1: str, 
+                              match_path: Path,
+                              feature_path: Path,
+                              database_image: Path,
+                              out: Path,
+                              dpi=75,
+                              save=True,
+                              kpts=False):
+    matches, _ = get_matches(match_path, image0, image1)
+    matches0 = matches[:,0]
+    matches1 = matches[:,1]
+
+    keypoint0 = get_keypoints(feature_path, image0)
+    keypoint1 = get_keypoints(feature_path, image1)
+
+    kp_0 = keypoint0[matches0]
+    kp_1 = keypoint1[matches1]
+
+    image_0 = read_image(database_image / image0)
+    image_1 = read_image(database_image / image1)
+
+    plot_images([image_0, image_1], dpi=dpi)
+    plot_matches(kp_0, kp_1, a = 0.1)
+    add_text(0, image0)
+    add_text(1, image1)
+    if save:
+        logger.info(f'Save image at {str(out)}')
+        if not out.exists():
+            out.parent.mkdir(parents=True, exist_ok=True)
+            save_plot(out)
+        else:
+            logger.info(f'Image already exists at {str(out)}')
+
+def visualize_matches_from_path_cross_view(match_path: Path,
+                                feature0_path: Path,
+                                feature1_path: Path,
+                                database_image0: Path,
+                                database_image1: Path,
+                                out: Path,
+                                names1=None,
+                                names2=None,
+                                pairs = None,
+                                dpi=75,
+                                save=True):
+    if pairs is None:
+        logger.info('No pairs specified, visualize all pairs')
+        names1, names2, pairs, _  = get_matches_from_path(match_path)
+    
+    assert len(names1) == len(names2) == len(pairs)
+    for image0, image1 , pair in zip(names1, names2, pairs):
+        logger.info(f'Visualizing matches for pair {image0} and {image1}')
+        '''
+        /workspace/outputs/NUS/BD/t0/debug/Left/006689.png_Left/005152.png.png
+        /workspace/outputs/NUS/BD/t0/debug/Left/ 006689 / Left_005152.png
+        '''
+        match_pair = image0.strip('.png') + '/' + image1.replace('/','-')
+        match_pair = match_pair.strip('.png')
+        visualize_match_cross_view(image0, image1, match_path, feature0_path , feature1_path, database_image0, database_image1, out / f'{match_pair}.png', dpi, save)
+
+def visualize_matches_from_path(match_path: Path,
+                                feature_path: Path,
+                                database_image: Path,
+                                out: Path,
+                                names1=None,
+                                names2=None,
+                                pairs = None,
+                                dpi=75,
+                                save=True):
+    if pairs is None:
+        logger.info('No pairs specified, visualize all pairs')
+        names1, names2, pairs, _  = get_matches_from_path(match_path)
+    
+    assert len(names1) == len(names2) == len(pairs)
+    for image0, image1 , pair in zip(names1, names2, pairs):
+        logger.info(f'Visualizing matches for pair {image0} and {image1}')
+        '''
+        /workspace/outputs/NUS/BD/t0/debug/Left/006689.png_Left/005152.png.png
+        /workspace/outputs/NUS/BD/t0/debug/Left/ 006689 / Left_005152.png
+        '''
+        match_pair = image0.strip('.png') + '/' + image1.replace('/','-')
+        match_pair = match_pair.strip('.png')
+        visualize_match_from_pair(image0, image1, match_path, feature_path , database_image, out / f'{match_pair}.png', dpi, save)
+ 
+def visualize_keypoints_from_file(image: str, 
+                                  feature_path: Path,
+                                  database_image: Path, 
+                                  out: Path,
+                                  dpi=75,
+                                  save=True):
+    keypoint = get_keypoints(feature_path, image)
+    image_0 = read_image(database_image / image)
+    plot_images([image_0], dpi=dpi)
+    plot_keypoints([keypoint])
+    add_text(0, image)
+    if save:
+        logger.info(f'Save image at {str(out)}')
+        if not out.exists():
+            out.parent.parent.mkdir(parents=True, exist_ok=True)
+            out.parent.mkdir(parents=True, exist_ok=True)
+            save_plot(out)
+        else:
+            logger.info(f'Image already exists at {str(out)}')
+
+def visualize_keypoints_from_path(feature_path: Path,
+                                  database_image: Path, 
+                                  out: Path,
+                                  images=None,  
+                                  dpi=75,
+                                  save=True):
+    if images is None:
+        images = list_h5_names(feature_path)
+    
+    for image in images:
+        if not out.exists():
+            out.mkdir(parents=True, exist_ok=True)
+        visualize_keypoints_from_file(image, feature_path, database_image, out / image, dpi, save)
+
+def parser():
+    parser = argparse.ArgumentParser(description='Visualization')
+    parser.add_argument("--mode", type=str, default="match", help="mode: match, keypoint, visible")
+    parser.add_argument("--match_path", type=str, default="/workspace/outputs/Nerf_synthetic/train/matches.h5", help="path to match file")
+    parser.add_argument("--feature_path", type=str, default="/workspace/outputs/Nerf_synthetic/train/features.h5", help="path to feature file")
+    parser.add_argument("--database_image", type=str, default="/workspace/dataset/Nerf/nerf_synthetic/lego/train", help="path to database image")
+    parser.add_argument("--out", type=str, default="/workspace/outputs/Nerf_synthetic/train/matches", help="path to output image")
+    parser.add_argument("--colmap_model", type=str, default="/workspace/outputs/Nerf_synthetic/train/sfm", help="path to colmap model")
+    return parser.parse_args()
+
+def main():
+    args = parser()
+    if args.mode == "match":
+        visualize_matches_from_path(Path(args.match_path), Path(args.feature_path), Path(args.database_image), Path(args.out))
+    if args.mode == "keypoint":
+        visualize_keypoints_from_path(Path(args.feature_path), Path(args.database_image), Path(args.out))
+    if args.mode == "visible":
+        model = pycolmap.Reconstruction(Path(args.colmap_model))
+        output = Path(args.out)
+        for i, image in model.images.items():
+            visualize_sfm_2d(model, Path(args.database_image), color_by='visibility', selected=[image.name],
+                            out=Path( output / f'{image.name}'), save=True)
+
+if __name__ == '__main__':
+    main()
