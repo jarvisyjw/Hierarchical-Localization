@@ -8,10 +8,10 @@ formatter = logging.Formatter(
     datefmt='%Y/%m/%d %H:%M:%S')
 handler = logging.StreamHandler()
 handler.setFormatter(formatter)
-handler.setLevel(logging.INFO)
+handler.setLevel(logging.DEBUG)
 
 logger = logging.getLogger("VPR_VERIFICATION")
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 logger.addHandler(handler)
 logger.propagate = False
 

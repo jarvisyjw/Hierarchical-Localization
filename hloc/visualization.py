@@ -222,6 +222,7 @@ def visualize_match_from_pair(image0: str, image1: str,
     add_text(1, image1)
     if save:
         logger.info(f'Save image at {str(out)}')
+        
         if not out.exists():
             out.parent.mkdir(parents=True, exist_ok=True)
             save_plot(out)
