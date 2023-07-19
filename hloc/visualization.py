@@ -220,9 +220,13 @@ def visualize_match_from_pair(image0: str, image1: str,
     plot_matches(kp_0, kp_1, a = 0.1)
     add_text(0, image0)
     add_text(1, image1)
+    add_text(0, f'num_matches: {len(kp_0)}', pos=(0.01, 0.01))
+    name0 = image0.replace("/", "-").strip(".jpg")
+    name1 = image1.replace("/", "-").strip(".jpg")
+    name = f'{name0}_{name1}'
     if save:
+        out = out / f'{name}.png'
         logger.info(f'Save image at {str(out)}')
-        
         if not out.exists():
             out.parent.mkdir(parents=True, exist_ok=True)
             save_plot(out)
