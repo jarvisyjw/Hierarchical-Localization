@@ -199,7 +199,7 @@ def visualize_match_from_pair(image0: str, image1: str,
                               match_path: Path,
                               feature_path: Path,
                               database_image: Path,
-                              out: Path,
+                              out= None,
                               dpi=75,
                               save=True,
                               kpts=False):
