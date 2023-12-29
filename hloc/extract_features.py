@@ -26,6 +26,18 @@ line using their name. Each is a dictionary with the following entries:
     - preprocessing: how to preprocess the images read from disk.
 '''
 confs = {
+    'superpoint': {
+        'output': 'feats-superpoint-n4096-r1024',
+        'model': {
+            'name': 'superpoint',
+            'nms_radius': 3,
+            'max_keypoints': 4096,
+        },
+        'preprocessing': {
+            'grayscale': True,
+            'resize_max': 1024,
+        },
+    },
     'superpoint_aachen': {
         'output': 'feats-superpoint-n4096-r1024',
         'model': {
