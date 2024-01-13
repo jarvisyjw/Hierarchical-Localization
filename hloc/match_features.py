@@ -12,7 +12,7 @@ import torch
 from . import matchers, logger
 from .utils.base_model import dynamic_load
 from .utils.parsers import names_to_pair, names_to_pair_old, parse_retrieval
-
+import pdb
 
 '''
 A set of standard configurations that can be directly selected from the command
@@ -111,13 +111,23 @@ class WorkQueue():
 
 class FeaturePairsDataset(torch.utils.data.Dataset):
     def __init__(self, pairs, feature_path_q, feature_path_r):
+        if feature_path_q != feature_path_r:
+            self.split = True
+        else:
+            self.split = False
+        
         self.pairs = pairs
         self.feature_path_q = feature_path_q
         self.feature_path_r = feature_path_r
 
     def __getitem__(self, idx):
         name0, name1 = self.pairs[idx]
+        if self.split:
+            name0 = name0.split('/')[-1]
+            name1 = name1.split('/')[-1]
+
         data = {}
+        # pdb.set_trace()
         with h5py.File(self.feature_path_q, 'r') as fd:
             grp = fd[name0]
             for k, v in grp.items():
@@ -234,6 +244,51 @@ def match_from_paths(conf: Dict,
         data = {k: v if k.startswith('image')
                 else v.to(device, non_blocking=True) for k, v in data.items()}
         pred = model(data)
+        pair = names_to_pair(*pairs[idx])
+        writer_queue.put((pair, pred))
+    writer_queue.join()
+    logger.info('Finished exporting matches.')
+    
+
+@torch.no_grad()
+def match_from_pairs(conf: Dict,
+                     pairs: list,
+                     match_path: Path,
+                     feature_path_q: Path,
+                     feature_path_ref: Path,
+                     overwrite: bool = False,
+                     RANSAC: bool = False) -> Path:
+    logger.info('Matching local features with configuration:'
+                f'\n{pprint.pformat(conf)}')
+
+    # if not feature_path.exists():
+    #     raise FileNotFoundError(f'Query feature file {feature_path}.')
+    match_path.parent.mkdir(exist_ok=True, parents=True)
+
+    pairs = find_unique_new_pairs(pairs, None if overwrite else match_path)
+    pdb.set_trace()
+    logger.info(f'Found {len(pairs)} pairs to match.')
+    if len(pairs) == 0:
+        logger.info('Skipping the matching.')
+        return
+
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    Model = dynamic_load(matchers, conf['model']['name'])
+    model = Model(conf['model']).eval().to(device)
+
+    dataset = FeaturePairsDataset(pairs, feature_path_q, feature_path_ref)
+    loader = torch.utils.data.DataLoader(
+        dataset, num_workers=5, batch_size=1, shuffle=False, pin_memory=True)
+    writer_queue = WorkQueue(partial(writer_fn, match_path=match_path), 5)
+    
+
+    for idx, data in enumerate(tqdm(loader, smoothing=.1)):
+        data = {k: v if k.startswith('image')
+                else v.to(device, non_blocking=True) for k, v in data.items()}
+        pdb.set_trace()
+        pred = model(data)
+        # matches = pred['matches0']
+        # print(pred)
         pair = names_to_pair(*pairs[idx])
         writer_queue.put((pair, pred))
     writer_queue.join()

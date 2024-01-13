@@ -137,3 +137,42 @@ def visualize_loc_from_log(image_dir, query_name, loc, reconstruction=None,
         opts = dict(pos=(0.01, 0.01), fs=5, lcolor=None, va='bottom')
         add_text(0, query_name, **opts)
         add_text(1, db_name, **opts)
+
+
+# def visualize_match_from_pair(image0: str, image1: str, 
+#                               match_path: Path,
+#                               feature_path: Path,
+#                               database_image: Path,
+#                               out= None,
+#                               dpi=75,
+#                               save=True,
+#                               kpts=False):
+#     matches, _ = get_matches(match_path, image0, image1)
+#     matches0 = matches[:,0]
+#     matches1 = matches[:,1]
+
+#     keypoint0 = get_keypoints(feature_path, image0)
+#     keypoint1 = get_keypoints(feature_path, image1)
+
+#     kp_0 = keypoint0[matches0]
+#     kp_1 = keypoint1[matches1]
+
+#     image_0 = read_image(database_image / image0)
+#     image_1 = read_image(database_image / image1)
+
+#     plot_images([image_0, image_1], dpi=dpi)
+#     plot_matches(kp_0, kp_1, a = 0.1)
+#     add_text(0, image0)
+#     add_text(1, image1)
+#     add_text(0, f'num_matches: {len(kp_0)}', pos=(0.01, 0.01))
+#     name0 = image0.replace("/", "-").strip(".jpg")
+#     name1 = image1.replace("/", "-").strip(".jpg")
+#     name = f'{name0}_{name1}'
+#     if save:
+#         out = out / f'{name}.png'
+#         logger.info(f'Save image at {str(out)}')
+#         if not out.exists():
+#             out.parent.mkdir(parents=True, exist_ok=True)
+#             save_plot(out)
+#         else:
+#             logger.info(f'Image already exists at {str(out)}')
