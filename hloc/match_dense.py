@@ -520,6 +520,65 @@ def match_and_assign(conf: Dict,
         logger.info(f'Reassign matches with max_error={conf["max_error"]}.')
         assign_matches(pairs, match_path, cpdict,
                        max_error=conf['max_error'])
+        
+
+@torch.no_grad()
+def match_pairs(conf: Dict,
+                pairs: list,
+                image_dir: Path,
+                match_path: Path,  # out
+                feature_path_q: Path,  # out
+                feature_paths_refs: Optional[List[Path]] = [],
+                max_kps: Optional[int] = 8192,
+                overwrite: bool = False) -> Path:
+    for path in feature_paths_refs:
+        if not path.exists():
+            raise FileNotFoundError(f'Reference feature file {path}.')
+    # pairs = parse_retrieval(pairs_path)
+    # pairs = [(q, r) for q, rs in pairs.items() for r in rs]
+    # pairs = find_unique_new_pairs(pairs, None if overwrite else match_path)
+    required_queries = set(sum(pairs, ()))
+
+    name2ref = {n: i for i, p in enumerate(feature_paths_refs)
+                for n in list_h5_names(p)}
+    existing_refs = required_queries.intersection(set(name2ref.keys()))
+
+    # images which require feature extraction
+    required_queries = required_queries - existing_refs
+
+    if feature_path_q.exists():
+        existing_queries = set(list_h5_names(feature_path_q))
+        feature_paths_refs.append(feature_path_q)
+        existing_refs = set.union(existing_refs, existing_queries)
+        if not overwrite:
+            required_queries = required_queries - existing_queries
+
+    if len(pairs) == 0 and len(required_queries) == 0:
+        logger.info("All pairs exist. Skipping dense matching.")
+        return
+
+    # extract semi-dense matches
+    match_dense(conf, pairs, image_dir, match_path,
+                existing_refs=existing_refs)
+
+    logger.info("Assigning matches...")
+
+    # Pre-load existing keypoints
+    cpdict, bindict = load_keypoints(
+        conf, feature_paths_refs,
+        quantize=required_queries)
+
+    # Reassign matches by aggregation
+    cpdict = aggregate_matches(
+        conf, pairs, match_path, feature_path=feature_path_q,
+        required_queries=required_queries, max_kps=max_kps, cpdict=cpdict,
+        bindict=bindict)
+
+    # Invalidate matches that are far from selected bin by reassignment
+    if max_kps is not None:
+        logger.info(f'Reassign matches with max_error={conf["max_error"]}.')
+        assign_matches(pairs, match_path, cpdict,
+                       max_error=conf['max_error'])
 
 
 @torch.no_grad()
@@ -567,6 +626,53 @@ def main(conf: Dict,
                      max_kps, overwrite)
 
     return features_q, matches
+
+
+# @torch.no_grad()
+# def match_from_pairs(conf: Dict,
+#          pairs: Path,
+#          image_dir: Path,
+#          export_dir: Optional[Path] = None,
+#          matches: Optional[Path] = None,  # out
+#          features: Optional[Path] = None,  # out
+#          features_ref: Optional[Path] = None,
+#          max_kps: Optional[int] = 8192,
+#          overwrite: bool = False) -> Path:
+#     logger.info('Extracting semi-dense features with configuration:'
+#                 f'\n{pprint.pformat(conf)}')
+
+#     if features is None:
+#         features = 'feats_'
+
+#     if isinstance(features, Path):
+#         features_q = features
+#         if matches is None:
+#             raise ValueError('Either provide both features and matches as Path'
+#                              ' or both as names.')
+#     else:
+#         if export_dir is None:
+#             raise ValueError('Provide an export_dir if features and matches'
+#                              f' are not file paths: {features}, {matches}.')
+#         features_q = Path(export_dir,
+#                           f'{features}{conf["output"]}.h5')
+#         if matches is None:
+#             matches = Path(
+#                 export_dir, f'{conf["output"]}_{pairs.stem}.h5')
+
+#     if features_ref is None:
+#         features_ref = []
+#     elif isinstance(features_ref, list):
+#         features_ref = list(features_ref)
+#     elif isinstance(features_ref, Path):
+#         features_ref = [features_ref]
+#     else:
+#         raise TypeError(str(features_ref))
+
+#     match_and_assign(conf, pairs, image_dir, matches,
+#                      features_q, features_ref,
+#                      max_kps, overwrite)
+
+#     return features_q, matches
 
 
 if __name__ == '__main__':
