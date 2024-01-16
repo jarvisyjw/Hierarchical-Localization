@@ -256,8 +256,7 @@ def match_from_pairs(conf: Dict,
                      match_path: Path,
                      feature_path_q: Path,
                      feature_path_ref: Path,
-                     overwrite: bool = False,
-                     RANSAC: bool = False) -> Path:
+                     overwrite: bool = False) -> Path:
     logger.info('Matching local features with configuration:'
                 f'\n{pprint.pformat(conf)}')
 
@@ -266,7 +265,7 @@ def match_from_pairs(conf: Dict,
     match_path.parent.mkdir(exist_ok=True, parents=True)
 
     pairs = find_unique_new_pairs(pairs, None if overwrite else match_path)
-    pdb.set_trace()
+    # pdb.set_trace()
     logger.info(f'Found {len(pairs)} pairs to match.')
     if len(pairs) == 0:
         logger.info('Skipping the matching.')
@@ -285,7 +284,7 @@ def match_from_pairs(conf: Dict,
     for idx, data in enumerate(tqdm(loader, smoothing=.1)):
         data = {k: v if k.startswith('image')
                 else v.to(device, non_blocking=True) for k, v in data.items()}
-        pdb.set_trace()
+        # pdb.set_trace()
         pred = model(data)
         # matches = pred['matches0']
         # print(pred)
