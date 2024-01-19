@@ -590,7 +590,7 @@ def main(conf: Dict,
          features: Optional[Path] = None,  # out
          features_ref: Optional[Path] = None,
          max_kps: Optional[int] = 8192,
-         overwrite: bool = False) -> Path:
+         overwrite: bool = True) -> Path:
     logger.info('Extracting semi-dense features with configuration:'
                 f'\n{pprint.pformat(conf)}')
 
@@ -626,53 +626,6 @@ def main(conf: Dict,
                      max_kps, overwrite)
 
     return features_q, matches
-
-
-# @torch.no_grad()
-# def match_from_pairs(conf: Dict,
-#          pairs: Path,
-#          image_dir: Path,
-#          export_dir: Optional[Path] = None,
-#          matches: Optional[Path] = None,  # out
-#          features: Optional[Path] = None,  # out
-#          features_ref: Optional[Path] = None,
-#          max_kps: Optional[int] = 8192,
-#          overwrite: bool = False) -> Path:
-#     logger.info('Extracting semi-dense features with configuration:'
-#                 f'\n{pprint.pformat(conf)}')
-
-#     if features is None:
-#         features = 'feats_'
-
-#     if isinstance(features, Path):
-#         features_q = features
-#         if matches is None:
-#             raise ValueError('Either provide both features and matches as Path'
-#                              ' or both as names.')
-#     else:
-#         if export_dir is None:
-#             raise ValueError('Provide an export_dir if features and matches'
-#                              f' are not file paths: {features}, {matches}.')
-#         features_q = Path(export_dir,
-#                           f'{features}{conf["output"]}.h5')
-#         if matches is None:
-#             matches = Path(
-#                 export_dir, f'{conf["output"]}_{pairs.stem}.h5')
-
-#     if features_ref is None:
-#         features_ref = []
-#     elif isinstance(features_ref, list):
-#         features_ref = list(features_ref)
-#     elif isinstance(features_ref, Path):
-#         features_ref = [features_ref]
-#     else:
-#         raise TypeError(str(features_ref))
-
-#     match_and_assign(conf, pairs, image_dir, matches,
-#                      features_q, features_ref,
-#                      max_kps, overwrite)
-
-#     return features_q, matches
 
 
 if __name__ == '__main__':
