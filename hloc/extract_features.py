@@ -175,8 +175,8 @@ def resize_image(image, size, interp):
 
 class ImageDataset(torch.utils.data.Dataset):
     default_conf = {
-        # 'globs': ['*.jpg', '*.png', '*.jpeg', '*.JPG', '*.PNG'],
-        'globs': ['*.jpg'],
+        'globs': ['*.jpg', '*.png', '*.jpeg', '*.JPG', '*.PNG'],
+        # 'globs': ['*.jpg'],
         'grayscale': False,
         'resize_max': None,
         'resize_force': False,

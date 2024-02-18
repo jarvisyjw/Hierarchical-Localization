@@ -475,9 +475,14 @@ def match_and_assign(conf: Dict,
     for path in feature_paths_refs:
         if not path.exists():
             raise FileNotFoundError(f'Reference feature file {path}.')
+
     pairs = parse_retrieval(pairs_path)
     pairs = [(q, r) for q, rs in pairs.items() for r in rs]
+    
+    logger.info(f'match_path: {match_path}')
+    logger.info(f'pairs: {pairs}')
     pairs = find_unique_new_pairs(pairs, None if overwrite else match_path)
+    logger.info('Unique pairs: %d', len(pairs))
     required_queries = set(sum(pairs, ()))
 
     name2ref = {n: i for i, p in enumerate(feature_paths_refs)
@@ -486,6 +491,11 @@ def match_and_assign(conf: Dict,
 
     # images which require feature extraction
     required_queries = required_queries - existing_refs
+    
+    logger.info(f'required_queries: {required_queries}')
+    
+    logger.info(f'feature_path_q: {feature_path_q}')
+    logger.info(f'Existing references: {existing_refs}')
 
     if feature_path_q.exists():
         existing_queries = set(list_h5_names(feature_path_q))
@@ -590,7 +600,7 @@ def main(conf: Dict,
          features: Optional[Path] = None,  # out
          features_ref: Optional[Path] = None,
          max_kps: Optional[int] = 8192,
-         overwrite: bool = True) -> Path:
+         overwrite: bool = False) -> Path:
     logger.info('Extracting semi-dense features with configuration:'
                 f'\n{pprint.pformat(conf)}')
 
@@ -608,7 +618,11 @@ def main(conf: Dict,
                              f' are not file paths: {features}, {matches}.')
         features_q = Path(export_dir,
                           f'{features}{conf["output"]}.h5')
+        logger.info(f'features:{features}')
+        logger.info(f'features_q: {features_q}')
+        
         if matches is None:
+            logger.debug(f'pairs stem{pairs.stem}')
             matches = Path(
                 export_dir, f'{conf["output"]}_{pairs.stem}.h5')
 
@@ -640,5 +654,11 @@ if __name__ == '__main__':
     parser.add_argument('--conf', type=str, default='loftr',
                         choices=list(confs.keys()))
     args = parser.parse_args()
-    main(confs[args.conf], args.pairs, args.image_dir, args.export_dir,
-         args.matches, args.features)
+    
+    # pairs = Path('dataset/robotcar/pairs/qAutumn_dbRain_test.txt')
+    # image_dir = Path('dataset/robotcar/images')
+    # export_dir = Path('dataset/robotcar/matches/Rain/')
+    
+    # main(confs[args.conf], pairs, image_dir, export_dir,
+    #      args.matches, args.features)
+    main(confs[args.conf], args.pairs, args.image_dir, args.export_dir)
