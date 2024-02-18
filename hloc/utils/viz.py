@@ -117,3 +117,4 @@ def add_text(idx, text, pos=(0.01, 0.99), fs=15, color='w',
 def save_plot(path, **kw):
     """Save the current figure without any white margin."""
     plt.savefig(path, bbox_inches='tight', pad_inches=0, **kw)
+    plt.clf()

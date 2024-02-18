@@ -293,6 +293,13 @@ def match_from_pairs(conf: Dict,
     writer_queue.join()
     logger.info('Finished exporting matches.')
 
+# @torch.no_grad()
+# def match_from_pair(conf: Dict, pair, 
+#                     match_path: Path,
+#                      feature_path_q: Path,
+#                      feature_path_ref: Path,
+#                      overwrite: bool = False) -> Path:
+    
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
