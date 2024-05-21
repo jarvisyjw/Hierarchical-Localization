@@ -51,6 +51,18 @@ def parse_retrieval(path):
     return dict(retrieval)
 
 
+def parse_pairs(path):
+    pairs = defaultdict(list)
+    with open(path, "r") as f:
+        for line in f:
+            line = line.strip("\n")
+            if len(line) == 0 or line[0] == "#":
+                continue
+            q, r, l = line.split()
+            pairs[q].append(r)
+    return dict(pairs)
+
+
 def names_to_pair(name0, name1, separator="/"):
     return separator.join((name0.replace("/", "-"), name1.replace("/", "-")))
 

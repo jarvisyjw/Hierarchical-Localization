@@ -12,7 +12,7 @@ from tqdm import tqdm
 
 from . import logger, matchers
 from .utils.base_model import dynamic_load
-from .utils.parsers import names_to_pair, names_to_pair_old, parse_retrieval
+from .utils.parsers import names_to_pair, names_to_pair_old, parse_retrieval, parse_pairs
 
 """
 A set of standard configurations that can be directly selected from the command
@@ -219,7 +219,8 @@ def match_from_paths(
     match_path.parent.mkdir(exist_ok=True, parents=True)
 
     assert pairs_path.exists(), pairs_path
-    pairs = parse_retrieval(pairs_path)
+    # pairs = parse_retrieval(pairs_path)
+    pairs = parse_pairs(pairs_path)
     pairs = [(q, r) for q, rs in pairs.items() for r in rs]
     pairs = find_unique_new_pairs(pairs, None if overwrite else match_path)
     if len(pairs) == 0:
