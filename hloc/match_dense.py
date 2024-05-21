@@ -18,7 +18,7 @@ from .extract_features import read_image, resize_image
 from .match_features import find_unique_new_pairs
 from .utils.base_model import dynamic_load
 from .utils.io import list_h5_names
-from .utils.parsers import names_to_pair, parse_retrieval
+from .utils.parsers import names_to_pair, parse_retrieval, parse_pairs
 
 # Default usage:
 # dense_conf = confs['loftr']
@@ -482,7 +482,8 @@ def match_and_assign(
     for path in feature_paths_refs:
         if not path.exists():
             raise FileNotFoundError(f"Reference feature file {path}.")
-    pairs = parse_retrieval(pairs_path)
+    # pairs = parse_retrieval(pairs_path)
+    pairs = parse_pairs(pairs_path)
     pairs = [(q, r) for q, rs in pairs.items() for r in rs]
     pairs = find_unique_new_pairs(pairs, None if overwrite else match_path)
     required_queries = set(sum(pairs, ()))

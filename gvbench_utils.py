@@ -44,7 +44,7 @@ if __name__ == "__main__":
       
       if args.matching_loftr:
             ### Match LoFTR of sequences
-            match_dense.main(match_dense.confs['loftr'], Path(args.pairs), image_dir= Path(args.image_path), export_dir=Path(args.output_path))
+            match_dense.main(match_dense.confs['loftr'], Path(args.pairs), image_dir= Path(args.image_path), matches= Path(args.output_path, f'{Path(args.pairs).stem}_loftr.h5'), features= Path(args.features, f'{Path(args.pairs).stem}_loftr_kpts.h5'))
       
       # conf = extract_features.confs[args.feature]
       # extract_features.main(conf, Path(args.image_path), feature_path = Path(args.output_path))
