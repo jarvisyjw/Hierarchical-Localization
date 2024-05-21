@@ -114,6 +114,9 @@ class FeaturePairsDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         name0, name1 = self.pairs[idx]
+        # name0 = name0
+        # name1 = name1
+        
         data = {}
         with h5py.File(self.feature_path_q, "r") as fd:
             grp = fd[name0]
