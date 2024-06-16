@@ -20,6 +20,7 @@ def parser():
 
 if __name__ == "__main__":
       args = parser()
+      
       if args.extraction:
             ### Extract features of each sequences
             if args.feature is not None:
