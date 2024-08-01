@@ -58,7 +58,10 @@ def parse_pairs(path):
             line = line.strip("\n")
             if len(line) == 0 or line[0] == "#":
                 continue
-            q, r, l = line.split()
+            if len(line.split()) == 3:
+                q, r, l = line.split()
+            if len(line.split()) == 2:
+                q, r = line.split()
             pairs[q].append(r)
     return dict(pairs)
 
