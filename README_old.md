@@ -1,11 +1,26 @@
 # hloc - the hierarchical localization toolbox
 
-This is `hloc`, a modular toolbox for state-of-the-art 6-DoF visual localization. It implements [Hierarchical Localization](https://arxiv.org/abs/1812.03506), leveraging image retrieval and feature matching, and is fast, accurate, and scalable. This codebase combines and makes easily accessible years of research on image matching and Structure-from-Motion. Refer to the original [README](README_old.md) for basic installation. 
+This is `hloc`, a modular toolbox for state-of-the-art 6-DoF visual localization. It implements [Hierarchical Localization](https://arxiv.org/abs/1812.03506), leveraging image retrieval and feature matching, and is fast, accurate, and scalable. This codebase combines and makes easily accessible years of research on image matching and Structure-from-Motion.
 
+With `hloc`, you can:
 
-## Customized Pipeline for feature extraction and matching
-This mainly serves for the easy usage of [GV-Bench](https://github.com/jarvisyjw/GV-Bench).
+- Reproduce state-of-the-art results on multiple indoor and outdoor visual localization benchmarks
+- Run Structure-from-Motion with SuperPoint+SuperGlue to localize with your own datasets
+- Evaluate your own local features or image retrieval for visual localization
+- Implement new localization pipelines and debug them easily 🔥
 
+<p align="center">
+  <a href="https://arxiv.org/abs/1812.03506"><img src="doc/hloc.png" width="60%"/></a>
+  <br /><em>Hierachical Localization uses both image retrieval and feature matching</em>
+</p>
+
+##
+
+## Quick start ➡️ [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1MrVs9b8aQYODtOGkoaGNF9Nji3sbCNMQ)
+
+Build 3D maps with Structure-from-Motion and localize any Internet image right from your browser! **You can now run `hloc` and COLMAP in Google Colab with GPU for free.** The notebook [`demo.ipynb`](https://colab.research.google.com/drive/1MrVs9b8aQYODtOGkoaGNF9Nji3sbCNMQ) shows how to run SfM and localization in just a few steps. Try it with your own data and let us know!
+
+## Installation
 
 `hloc` requires Python >=3.7 and PyTorch >=1.1. Installing the package locally pulls the other dependencies:
 

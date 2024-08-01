@@ -1,0 +1,15 @@
+extraction:
+  image_path: data/megadepth1500/images
+  features: 
+  output_path: data/megadepth1500/features
+matching:
+  pairs: data/megadepth1500/pairs.txt
+  feature: 
+  feature_path: data/megadepth1500/features
+  output_path: data/megadepth1500/matches
+  matcher: 
+matching_loftr:
+  pairs: data/megadepth1500/pairs.txt
+  image_path: data/megadepth1500/images
+  matches: data/megadepth1500/matches
+  features: data/megadepth1500/features
