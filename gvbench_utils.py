@@ -76,8 +76,8 @@ if __name__ == "__main__":
                   
             else:
                   features = ['superpoint_max', 'sift', 'disk']
-                  feature_path = Path(mat.feature_path, f'{feature}.h5')
                   for feature in features:
+                        feature_path = Path(mat.feature_path, f'{feature}.h5')
                         if feature == 'superpoint_max':
                               match_features.main(match_features.confs['superglue'], pairs = pairs, features= feature_path, matches= Path(mat.output_path, f'{pairs.stem}_{feature}_superglue.h5'))
                               match_features.main(match_features.confs['NN-superpoint'], pairs = pairs, features= feature_path, matches= Path(mat.output_path, f'{pairs.stem}_{feature}_NN.h5'))
