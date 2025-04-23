@@ -35,6 +35,13 @@ confs = {
             "features": "disk",
         },
     },
+    "aliked+lightglue": {
+        "output": "matches-aliked-lightglue",
+        "model": {
+            "name": "lightglue",
+            "features": "aliked",
+        },
+    },
     "superglue": {
         "output": "matches-superglue",
         "model": {
@@ -114,6 +121,9 @@ class FeaturePairsDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         name0, name1 = self.pairs[idx]
+        # name0 = name0
+        # name1 = name1
+        
         data = {}
         with h5py.File(self.feature_path_q, "r") as fd:
             grp = fd[name0]
