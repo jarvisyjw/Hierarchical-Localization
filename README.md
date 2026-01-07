@@ -16,6 +16,16 @@ With `hloc`, you can:
 
 ##
 
+## TODO:
+<details>
+<summary>(Jan. 07) Run on Customized Datasets</summary>
+
+- [ ] Organize the pipeline_FPv1_SfM.ipynb
+- [ ] A pipeline script for FPv1 Datasets
+- [ ] Run on Oxford_Day_and_Night dataset
+
+</details>
+
 ## Quick start ➡️ [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1Eqoz-uLTCGeEWtH95FZyVs2vI-qkTOWr)
 
 Build 3D maps with Structure-from-Motion and localize any Internet image right from your browser! **You can now run `hloc` and COLMAP in Google Colab with GPU for free.** The notebook [`demo.ipynb`](https://colab.research.google.com/drive/1Eqoz-uLTCGeEWtH95FZyVs2vI-qkTOWr) shows how to run SfM and localization in just a few steps. Try it with your own data and let us know!
