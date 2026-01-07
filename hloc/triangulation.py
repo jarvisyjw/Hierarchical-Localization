@@ -68,7 +68,8 @@ def import_features(
     db = COLMAPDatabase.connect(database_path)
 
     for image_name, image_id in tqdm(image_ids.items()):
-        keypoints = get_keypoints(features_path, image_name)
+        keypoints = get_keypoints(features_path, image_name.split("/")[-1])
+        # keypoints = get_keypoints(features_path, f"rgb/{image_name}")
         keypoints += 0.5  # COLMAP origin
         db.add_keypoints(image_id, keypoints)
 
@@ -139,7 +140,8 @@ def geometric_verification(
     inlier_ratios = []
     matched = set()
     for name0 in tqdm(pairs):
-        id0 = image_ids[name0]
+        id0 = image_ids[name0.split("/")[-1]]
+        # id0 = image_ids[name0]
         image0 = reference.images[id0]
         cam0 = reference.cameras[image0.camera_id]
         kps0, noise0 = get_keypoints(features_path, name0, return_uncertainty=True)
@@ -170,7 +172,7 @@ def geometric_verification(
                 db.add_two_view_geometry(id0, id1, matches)
                 continue
 
-            cam1_from_cam0 = image1.cam_from_world * image0.cam_from_world.inverse()
+            cam1_from_cam0 = image1.cam_from_world() * image0.cam_from_world().inverse()
             errors0, errors1 = compute_epipolar_errors(
                 cam1_from_cam0, kps0[matches[:, 0]], kps1[matches[:, 1]]
             )
@@ -234,7 +236,7 @@ def main(
 
     sfm_dir.mkdir(parents=True, exist_ok=True)
     database = sfm_dir / "database.db"
-    reference = pycolmap.Reconstruction(reference_model)
+    reference = pycolmap.Reconstruction(str(reference_model))
 
     image_ids = create_db_from_model(reference, database)
     import_features(image_ids, database, features)

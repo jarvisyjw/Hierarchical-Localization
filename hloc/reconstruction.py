@@ -37,16 +37,20 @@ def import_images(
 ):
     logger.info("Importing images into the database...")
     if options is None:
-        options = {}
+        options = pycolmap.ImageReaderOptions()
     images = list(image_dir.iterdir())
     if len(images) == 0:
         raise IOError(f"No images found in {image_dir}.")
+    if isinstance(database_path, Path):
+        database_path = str(database_path)
+    if isinstance(image_dir, Path):
+        image_dir = str(image_dir)
     with pycolmap.ostream():
         pycolmap.import_images(
             database_path,
             image_dir,
             camera_mode,
-            image_list=image_list or [],
+            image_names=image_list or [],
             options=options,
         )
 

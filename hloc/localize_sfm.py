@@ -9,7 +9,7 @@ import pycolmap
 from tqdm import tqdm
 
 from . import logger
-from .utils.io import get_keypoints, get_matches
+from .utils.io import get_keypoints, get_matches, write_poses
 from .utils.parsers import parse_image_lists, parse_retrieval
 
 
@@ -58,7 +58,9 @@ class QueryLocalizer:
     def localize(self, points2D_all, points2D_idxs, points3D_id, query_camera):
         points2D = points2D_all[points2D_idxs]
         points3D = [self.reconstruction.points3D[j].xyz for j in points3D_id]
-        ret = pycolmap.absolute_pose_estimation(
+        if points2D.shape[0] == 0:
+            return None
+        ret = pycolmap.estimate_and_refine_absolute_pose(
             points2D,
             points3D,
             query_camera,
@@ -85,7 +87,6 @@ def pose_from_cluster(
     num_matches = 0
     for i, db_id in enumerate(db_ids):
         image = localizer.reconstruction.images[db_id]
-        logger.debug(f"Processing database image {image.name}...")
         if image.num_points3D == 0:
             logger.debug(f"No 3D points found for {image.name}.")
             continue
@@ -94,7 +95,6 @@ def pose_from_cluster(
         )
 
         matches, _ = get_matches(matches_path, qname, image.name)
-        logger.debug(f"Num of points3D: {len(points3D_ids)} from image {image.name}")
         matches = matches[points3D_ids[matches[:, 1]] != -1]
         num_matches += len(matches)
         for idx, m in matches:
@@ -107,7 +107,6 @@ def pose_from_cluster(
     idxs = list(kp_idx_to_3D.keys())
     mkp_idxs = [i for i in idxs for _ in kp_idx_to_3D[i]]
     mp3d_ids = [j for i in idxs for j in kp_idx_to_3D[i]]
-    logger.debug(f"Starting PnP... {len(mkp_idxs)} matches found.")
     ret = localizer.localize(kpq, mkp_idxs, mp3d_ids, query_camera, **kwargs)
     if ret is not None:
         ret["camera"] = query_camera
@@ -211,17 +210,7 @@ def main(
 
     logger.info(f"Localized {len(cam_from_world)} / {len(queries)} images.")
     logger.info(f"Writing poses to {results}...")
-    with open(results, "w") as f:
-        for query, t in cam_from_world.items():
-            print(t)
-            # qvec = " ".join(map(str, t.rotation.quat[[3, 0, 1, 2]]))
-            # tvec = " ".join(map(str, t.translation))
-            qvec = " ".join(map(str, t['qvec']))
-            tvec = " ".join(map(str, t['tvec']))
-            name = query.split("/")[-1]
-            if prepend_camera_name:
-                name = query.split("/")[-2] + "/" + name
-            f.write(f"{name} {qvec} {tvec}\n")
+    write_poses(cam_from_world, results, prepend_camera_name=prepend_camera_name)
 
     logs_path = f"{results}_logs.pkl"
     logger.info(f"Writing logs to {logs_path}...")
