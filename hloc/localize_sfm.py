@@ -85,6 +85,7 @@ def pose_from_cluster(
     num_matches = 0
     for i, db_id in enumerate(db_ids):
         image = localizer.reconstruction.images[db_id]
+        logger.debug(f"Processing database image {image.name}...")
         if image.num_points3D == 0:
             logger.debug(f"No 3D points found for {image.name}.")
             continue
@@ -93,6 +94,7 @@ def pose_from_cluster(
         )
 
         matches, _ = get_matches(matches_path, qname, image.name)
+        logger.debug(f"Num of points3D: {len(points3D_ids)} from image {image.name}")
         matches = matches[points3D_ids[matches[:, 1]] != -1]
         num_matches += len(matches)
         for idx, m in matches:
@@ -105,6 +107,7 @@ def pose_from_cluster(
     idxs = list(kp_idx_to_3D.keys())
     mkp_idxs = [i for i in idxs for _ in kp_idx_to_3D[i]]
     mp3d_ids = [j for i in idxs for j in kp_idx_to_3D[i]]
+    logger.debug(f"Starting PnP... {len(mkp_idxs)} matches found.")
     ret = localizer.localize(kpq, mkp_idxs, mp3d_ids, query_camera, **kwargs)
     if ret is not None:
         ret["camera"] = query_camera
@@ -202,7 +205,7 @@ def main(
                 cam_from_world[qname] = ret["cam_from_world"]
             else:
                 closest = reference_sfm.images[db_ids[0]]
-                cam_from_world[qname] = closest.cam_from_world
+                cam_from_world[qname] = closest.cam_from_world()
             log["covisibility_clustering"] = covisibility_clustering
             logs["loc"][qname] = log
 
@@ -210,8 +213,11 @@ def main(
     logger.info(f"Writing poses to {results}...")
     with open(results, "w") as f:
         for query, t in cam_from_world.items():
-            qvec = " ".join(map(str, t.rotation.quat[[3, 0, 1, 2]]))
-            tvec = " ".join(map(str, t.translation))
+            print(t)
+            # qvec = " ".join(map(str, t.rotation.quat[[3, 0, 1, 2]]))
+            # tvec = " ".join(map(str, t.translation))
+            qvec = " ".join(map(str, t['qvec']))
+            tvec = " ".join(map(str, t['tvec']))
             name = query.split("/")[-1]
             if prepend_camera_name:
                 name = query.split("/")[-2] + "/" + name
